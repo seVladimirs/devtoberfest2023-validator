@@ -31,29 +31,19 @@ while getopts ":u:" opt; do
 done
 shift $((OPTIND - 1))
 
-# Check if userInput is empty and prompt the user to enter a value
 if [[ -z $userInput ]]; then
     read -p "Enter a scnId: " userInput
 fi
 
-# Send GET request and store the response in a variable
 response=$(curl -s "https://people-api.services.sap.com/rs/badge/$userInput?sort=timestamp,desc&size=1000")
 
-# Extract objects where 'displayName' contains "Devtoberfest 2023" using jq
 badges=$(echo "$response" | jq -r '.content[] | select(.displayName | contains("- Devtoberfest 2023 - ")) | .displayName' | awk '{print substr($1, 1, 7)}')
-
-# Output the filtered displayNames
-# echo "$badges"
 
 week1=$(curl -s "https://groups.community.sap.com/t5/devtoberfest-blog-posts/devtoberfest-2023-contest-activities-and-points-week-1/ba-p/286328")
 
 table_html=$(echo "$week1" | pup 'table tr td:nth-child(2) p span json{}')
 
-# echo "$table_html"
-
 json=$(echo "$table_html" | jq 'map(select(.text | tostring | startswith("#")))')
-# json=$(echo "$table_html" | jq --argjson filter "$(jq 'map(select(.text | contains("#")))' <<<[])" \
-#     '. | map(select(.text | contains($filter[].text)))')
 
 week1_badges=$(echo "$json" | jq -r '.[] | .text')
 
