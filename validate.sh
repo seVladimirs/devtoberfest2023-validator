@@ -1,56 +1,61 @@
 #!/bin/bash
 
-if ! command -v pup &>/dev/null; then
-    echo "pup command not found. Installing pup via brew..."
-    if command -v go &>/dev/null; then
-        brew install pup
-    else
-        echo "Error: brew command not found. Please install pup manually as per https://github.com/ericchiang/pup"
-        exit 1
-    fi
+# Check if user_id is provided as an argument
+if [ -z "$1" ]; then
+    echo "Usage: $0 <user_id>"
+    exit 1
 fi
 
-# Initialize userInput variable
-userInput=""
+# Assign the provided user_id to the user_id variable
+user_id="$1"
 
-# Process command-line options
-while getopts ":u:" opt; do
-    case ${opt} in
-    u)
-        userInput=${OPTARG}
-        ;;
-    \?)
-        echo "Invalid option: -$OPTARG" >&2
-        exit 1
-        ;;
-    :)
-        echo "Option -$OPTARG requires an scnId" >&2
-        exit 1
-        ;;
-    esac
-done
-shift $((OPTIND - 1))
+# Print a descriptive message with emojis
+echo "🔍 Fetching and validating Devtoberfest 2023 badges for user - ${user_id} 🔍"
 
-if [[ -z $userInput ]]; then
-    read -p "Enter a scnId: " userInput
+# Define the URL of the JSON endpoint for Devtoberfest 2023 badges
+devtoberfest_badges_url="https://raw.githubusercontent.com/SAP-samples/sap-community-activity-badges/main/srv/util/badges.json"
+
+# Use curl to fetch the JSON data and jq to parse it
+devtoberfest_badges_data=$(curl -s "$devtoberfest_badges_url" | jq '.')
+
+# Check if the JSON data was successfully retrieved
+if ! curl -s -f "$devtoberfest_badges_url" >/dev/null; then
+    echo "❌ Failed to retrieve JSON data from $devtoberfest_badges_url ❌"
+    exit 1
 fi
 
-response=$(curl -s "https://people-api.services.sap.com/rs/badge/$userInput?sort=timestamp,desc&size=1000")
+# Define the URL of the JSON endpoint to fetch user badges with the corrected URL
+user_badges_url="https://people-api.services.sap.com/rs/badge/${user_id}?sort=timestamp,desc&size=10000"
 
-badges=$(echo "$response" | jq -r '.content[] | select(.displayName | contains("- Devtoberfest 2023 - ")) | .displayName' | awk '{print substr($1, 1, 7)}')
+# Check if the JSON data was successfully retrieved
+if ! curl -s -f "$user_badges_url" >/dev/null; then
+    echo "❌ Failed to retrieve JSON data from $user_badges_url ❌"
+    exit 1
+fi
 
-week1=$(curl -s "https://groups.community.sap.com/t5/devtoberfest-blog-posts/devtoberfest-2023-contest-activities-and-points-week-1/ba-p/286328")
+# Use curl to fetch the JSON data
+user_badges=$(curl -s "$user_badges_url" | jq -r '.content[] | select(.displayName | contains("2023")) | .displayName')
 
-table_html=$(echo "$week1" | pup 'table tr td:nth-child(2) p span json{}')
+# Initialize a variable to keep track of total points
+total_points=0
 
-json=$(echo "$table_html" | jq 'map(select(.text | tostring | startswith("#")))')
+# Loop through each object in the JSON array
+for row in $(echo "${devtoberfest_badges_data}" | jq -r '.[] | @base64'); do
+    _jq() {
+        echo "${row}" | base64 --decode | jq -r "${1}"
+    }
 
-week1_badges=$(echo "$json" | jq -r '.[] | .text')
+    display_name=$(_jq '.displayName')
+    points=$(_jq '.points')
+    badge_check_mark="❌" # Default to ❌
 
-for entry in $week1_badges; do
-    if [[ $badges =~ $entry ]]; then
-        echo "✅ $entry"
-    else
-        echo "❌ $entry"
+    if [[ $user_badges =~ $display_name ]]; then
+        badge_check_mark="✅"                    # Change to ✅ if it matches
+        total_points=$((total_points + points)) # Sum up points
     fi
+
+    echo "${badge_check_mark} ${display_name} [Points: ${points}]"
 done
+
+# Print the total points with an emoji
+echo "🌟 Total Points for ✅ badges: ${total_points} 🌟"
