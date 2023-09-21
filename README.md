@@ -6,14 +6,16 @@
 
 The "Devtoberfest Badges Checker" is a Bash script designed to retrieve and match badges earned during the Devtoberfest 2023 event. It checks the availability of the "pup" command and installs it if necessary. Using the SAP People API, it fetches badge information based on a given SCN ID or prompts the user for input. The script then compares the obtained badges with the Week 1 badges extracted from a SAP Community blog post. It displays the matched badges with a "✅" symbol and non-matching badges with an "❌" symbol.
 
-## Prerequisites
+## bash 
+
+### Prerequisites
 
 To use this script, ensure you have the following:
 
 - The "pup" command installed. If not found, the script attempts to install it using Homebrew.
 - If Homebrew is unavailable, refer to the official [pup GitHub repository](https://github.com/ericchiang/pup) for manual installation instructions.
 
-## Usage
+### Usage
 
 Execute the script using the following command:
 
@@ -37,3 +39,51 @@ Example output:
 Please note that this script is specifically tailored for the Devtoberfest 2023 event and may not work as expected for other scenarios or events.
 
 Note: This README and the accompanying script were generated using an AI language model. Modifications made to this file may be overwritten by future code generations.
+
+### node 
+
+To use the Node.js version of the Devtoberfest Badges Checker, follow the instructions below:
+
+#### Prerequisites
+
+- Node.js and npm installed on your system. If not, download and install them from [nodejs.org](https://nodejs.org/).
+
+#### Installation
+
+In your project directory, install the required dependencies using the following command:
+
+```sh
+npm install 
+```
+
+#### Usage
+
+To execute the Node.js script, use the following command in your terminal, replacing `<scnId>` with the SCN ID you want to check:
+
+```sh
+npm start -- -u <scnId>
+```
+
+or directly with node:
+
+```sh
+node index.js -u <scnId>
+```
+
+For example:
+
+```sh
+node index.js -u mariannnn
+```
+
+#### Output
+
+The script will compare the badges from the SAP People API against the badges listed in the JSON file and will display a list of badges with a "✅" symbol for earned badges and a "❌" symbol for unearned badges.
+
+Example output:
+
+```sh
+✅ #E3CF57 - Devtoberfest 2023 - Petoberfest
+❌ #CD9B1D - Devtoberfest 2023 - Making SAP Extensibility real with CAP in 60 minutes
+✅ #D2691E - Devtoberfest 2023 - Capire: Introduction, enhancements, and facilitating the development process
+```
