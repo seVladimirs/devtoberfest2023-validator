@@ -61,19 +61,20 @@ npm install
 To execute the Node.js script, use the following command in your terminal, replacing `<scnId>` with the SCN ID you want to check:
 
 ```sh
-npm start -- -u <scnId>
-```
-
-or directly with node:
-
-```sh
 node index.js -u <scnId>
 ```
+
+If you only want to display those badges that were not found, add the -n or --notFound flag:
+    
+```sh
+node index.js -u <scnId> -n
+```
+
 
 For example:
 
 ```sh
-node index.js -u mariannnn
+node index.js -u mariannnn -n
 ```
 
 #### Output

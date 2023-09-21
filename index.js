@@ -24,30 +24,49 @@ async function parseTable(html) {
   return rows;
 }
 
-async function checkBadges(scnId) {
+async function checkBadges(scnId, notFoundOnly) {
   try {
-    const url = 'https://groups.community.sap.com/t5/devtoberfest-blog-posts/devtoberfest-2023-contest-activities-and-points-week-1/ba-p/286328';
+    const url =
+      'https://groups.community.sap.com/t5/devtoberfest-blog-posts/devtoberfest-2023-contest-activities-and-points-week-1/ba-p/286328';
     const html = await fetchHtml(url);
     const tableData = await parseTable(html);
 
-    const allBadgesResponse = await axios.get('https://raw.githubusercontent.com/SAP-samples/sap-community-activity-badges/main/srv/util/badges.json');
+    const allBadgesResponse = await axios.get(
+      'https://raw.githubusercontent.com/SAP-samples/sap-community-activity-badges/main/srv/util/badges.json'
+    );
     const allBadges = allBadgesResponse.data;
 
-    const userBadgesResponse = await axios.get(`https://people-api.services.sap.com/rs/badge/${scnId}?sort=timestamp,desc&size=1000`);
+    const userBadgesResponse = await axios.get(
+      `https://people-api.services.sap.com/rs/badge/${scnId}?sort=timestamp,desc&size=1000`
+    );
     const userBadges = userBadgesResponse.data.content;
 
-    allBadges.forEach(badge => {
-      let foundTableRow = tableData.find(row => badge.displayName.includes(row.badgeCode));
+    allBadges.forEach((badge) => {
+      let foundTableRow = tableData.find((row) =>
+        badge.displayName.includes(row.badgeCode)
+      );
       // if foundTableRow or foundTableRow.contentWeekLink is empty, then set foundTableRow to undefined
-        if (foundTableRow && !foundTableRow.contentWeekLink) {
-            foundTableRow = undefined;
-        }
-      const userBadge = userBadges.find(ub => ub.displayName.includes(badge.displayName));
-      
+      if (foundTableRow && !foundTableRow.contentWeekLink) {
+        foundTableRow = undefined;
+      }
+      const userBadge = userBadges.find((ub) =>
+        ub.displayName.includes(badge.displayName)
+      );
+
       if (userBadge) {
-        console.log(`✅ ${badge.displayName} - ${foundTableRow ? foundTableRow.contentWeekLink : 'Link not found'}`);
+        if (!notFoundOnly) {
+          console.log(
+            `✅ ${badge.displayName} - ${
+              foundTableRow ? foundTableRow.contentWeekLink : 'Link not found'
+            }`
+          );
+        }
       } else {
-        console.log(`❌ ${badge.displayName} - ${foundTableRow ? foundTableRow.contentWeekLink : 'Link not found'}`);
+        console.log(
+          `❌ ${badge.displayName} - ${
+            foundTableRow ? foundTableRow.contentWeekLink : 'Link not found'
+          }`
+        );
       }
     });
   } catch (error) {
@@ -60,7 +79,12 @@ const argv = yargs(hideBin(process.argv)).options({
     type: 'string',
     demandOption: true,
     describe: 'User scnId',
-  }
+  },
+  n: {
+    type: 'boolean',
+    default: false,
+    describe: 'Display only badges that were not found',
+  },
 }).argv;
 
-checkBadges(argv.u);
+checkBadges(argv.u, argv.n);
