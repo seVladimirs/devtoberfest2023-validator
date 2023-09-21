@@ -1,23 +1,49 @@
 const axios = require('axios');
+const cheerio = require('cheerio');
 const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');
 
+async function fetchHtml(url) {
+  try {
+    const response = await axios.get(url);
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch HTML from ${url}`);
+  }
+}
+
+async function parseTable(html) {
+  const $ = cheerio.load(html);
+  const rows = [];
+  $('table tbody tr').each((i, row) => {
+    const $row = $(row);
+    const badgeCode = $row.find('td:nth-child(2)').text().trim();
+    const contentWeekLink = $row.find('td:nth-child(3) a').attr('href');
+    rows.push({ badgeCode, contentWeekLink });
+  });
+  return rows;
+}
+
 async function checkBadges(scnId) {
   try {
-    // Fetch all badges
+    const url = 'https://groups.community.sap.com/t5/devtoberfest-blog-posts/devtoberfest-2023-contest-activities-and-points-week-1/ba-p/286328';
+    const html = await fetchHtml(url);
+    const tableData = await parseTable(html);
+
     const allBadgesResponse = await axios.get('https://raw.githubusercontent.com/SAP-samples/sap-community-activity-badges/main/srv/util/badges.json');
-    const allBadges = allBadgesResponse.data.map(badge => badge.displayName);
-    
-    // Fetch user's badges
+    const allBadges = allBadgesResponse.data;
+
     const userBadgesResponse = await axios.get(`https://people-api.services.sap.com/rs/badge/${scnId}?sort=timestamp,desc&size=1000`);
-    const userBadges = userBadgesResponse.data.content.map(badge => badge.displayName);
-    
-    // Check which badges are in the user's badges list
+    const userBadges = userBadgesResponse.data.content;
+
     allBadges.forEach(badge => {
-      if (userBadges.includes(badge)) {
-        console.log(`✅ ${badge}`);
+      const foundTableRow = tableData.find(row => badge.displayName.includes(row.badgeCode));
+      const userBadge = userBadges.find(ub => ub.displayName.includes(badge.displayName));
+      
+      if (userBadge) {
+        console.log(`✅ ${badge.displayName} - ${foundTableRow ? foundTableRow.contentWeekLink : 'Link not found'}`);
       } else {
-        console.log(`❌ ${badge}`);
+        console.log(`❌ ${badge.displayName} - ${foundTableRow ? foundTableRow.contentWeekLink : 'Link not found'}`);
       }
     });
   } catch (error) {
