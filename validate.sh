@@ -36,6 +36,12 @@ fi
 # Use curl to fetch the JSON data
 user_badges=$(curl -s "$user_badges_url" | jq -r '.content[] | select(.displayName | contains("2023")) | .displayName')
 
+# Check if no user badges were found
+if [ -z "$user_badges" ]; then
+    echo "ℹ️ No badges found for user ${user_id} ℹ️"
+    exit 0
+fi
+
 # Initialize a variable to keep track of total points
 total_points=0
 
@@ -49,7 +55,8 @@ for row in $(echo "${devtoberfest_badges_data}" | jq -r '.[] | @base64'); do
     points=$(_jq '.points')
     badge_check_mark="❌" # Default to ❌
 
-    if [[ $user_badges =~ $display_name ]]; then
+    # if [[ $user_badges =~ $display_name ]]; then
+    if [[ $user_badges == *"$display_name"* ]]; then
         badge_check_mark="✅"                    # Change to ✅ if it matches
         total_points=$((total_points + points)) # Sum up points
     fi
