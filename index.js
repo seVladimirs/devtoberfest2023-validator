@@ -37,7 +37,11 @@ async function checkBadges(scnId) {
     const userBadges = userBadgesResponse.data.content;
 
     allBadges.forEach(badge => {
-      const foundTableRow = tableData.find(row => badge.displayName.includes(row.badgeCode));
+      let foundTableRow = tableData.find(row => badge.displayName.includes(row.badgeCode));
+      // if foundTableRow or foundTableRow.contentWeekLink is empty, then set foundTableRow to undefined
+        if (foundTableRow && !foundTableRow.contentWeekLink) {
+            foundTableRow = undefined;
+        }
       const userBadge = userBadges.find(ub => ub.displayName.includes(badge.displayName));
       
       if (userBadge) {
