@@ -54,6 +54,7 @@ for row in $(echo "${devtoberfest_badges_data}" | jq -r '.[] | @base64'); do
     display_name=$(_jq '.displayName')
     points=$(_jq '.points')
     badge_check_mark="❌" # Default to ❌
+    url=$(_jq '.URL')
 
     # if [[ $user_badges =~ $display_name ]]; then
     if [[ $user_badges == *"$display_name"* ]]; then
@@ -61,7 +62,7 @@ for row in $(echo "${devtoberfest_badges_data}" | jq -r '.[] | @base64'); do
         total_points=$((total_points + points)) # Sum up points
     fi
 
-    echo "${badge_check_mark} ${display_name} [Points: ${points}]"
+    echo "${badge_check_mark} ${display_name} [Points: ${points}] 👉 ${url}"
 done
 
 # Print the total points with an emoji
