@@ -11,14 +11,20 @@ async function checkBadges(scnId, notFoundOnly) {
     );
     const allBadges = allBadgesResponse.data;
 
+    const allDevtoberfestUsersResponse = await axios.get(
+      'https://raw.githubusercontent.com/SAP-samples/sap-community-activity-badges/main/srv/util/members.json'
+    ); 
+
+    const member = allDevtoberfestUsersResponse.data.data.items.find((member) => member.login === scnId);
+    
     const userBadgesResponse = await axios.get(
-      `https://people-api.services.sap.com/rs/badge/${scnId}?sort=timestamp,desc&size=1000`
+      `https://community.sap.com/khhcw49343/api/2.0/users/${member.id}`,
     );
-    const userBadges = userBadgesResponse.data.content;
+    const userBadges = userBadgesResponse.data.data.user_badges.items;
 
     allBadges.forEach((badge) => {
       // Find corresponding user badge
-      const userBadge = userBadges.find((ub) => ub.displayName.includes(badge.displayName));
+      const userBadge = userBadges.find((ub) => ub.badge.title.includes(badge.displayName));
     
       if (userBadge) {
         if (!notFoundOnly) {
